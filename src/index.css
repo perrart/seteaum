@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-pitch-950 text-chalk font-sans antialiased;
+    /* Textura sutil de gramado: faixas verticais quase imperceptíveis */
+    background-image:
+      radial-gradient(
+        circle at 50% -10%,
+        rgba(24, 184, 92, 0.16),
+        transparent 60%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.012) 0px,
+        rgba(255, 255, 255, 0.012) 60px,
+        transparent 60px,
+        transparent 120px
+      );
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-turf/40 text-chalk;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  /* Esconde scrollbar mantendo o scroll (painel de jogadores) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
