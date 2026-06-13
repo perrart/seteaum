@@ -1,5 +1,32 @@
 import type { CupResult, LineupSlot, FormationKey } from "../types";
 
+const COLORS = {
+  page: "#EEE8D9",
+  paper: "#FBF8EF",
+  ink: "#17140F",
+  soft: "#6E665A",
+  line: "rgba(23,20,15,0.12)",
+  gold: "#C8972E",
+  goldLight: "#E7BE4D",
+};
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 function drawBrazilFlag(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -25,176 +52,149 @@ function drawBrazilFlag(
   ctx.restore();
 }
 
-const COLORS = {
-  paper: "#FBF8EF",
-  panel: "#17140F",
-  ink: "#17140F",
-  soft: "#6E665A",
-  line: "rgba(0,0,0,0.14)",
-  gold: "#C8972E",
-  goldLight: "#E7BE4D",
-  red: "#E8472B",
-  green: "#2F8F3E",
-  white: "#F4F0E4",
+const OUTCOME_TEXT: Record<CupResult["outcome"], string> = {
+  CAMPEÃO: "CAMPEÃO",
+  VICE: "VICE-CAMPEÃO",
+  ELIMINADO: "ELIMINADO",
 };
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-/** Desenha o card e devolve um Blob PNG */
 export async function renderCardBlob(
   lineup: LineupSlot[],
   cup: CupResult,
   formationKey: FormationKey
 ): Promise<Blob> {
-  // Garante que as fontes do Google já carregaram
   try {
     await (document as any).fonts?.ready;
   } catch {
     /* ignore */
   }
 
+  const players = lineup.filter((s) => s.player);
   const W = 760;
-  const H = 1232;
+  const PAD = 54;
+  const FRAME = 7;
+
+  // ---- layout vertical (determinístico) ----
+  const yBrand = 84;
+  const yDivider = 104;
+  const yOutcome = 168;
+  const yRecord = 300;
+  const boxY = 336;
+  const boxH = 188;
+  const listStart = boxY + boxH + 52;
+  const rowH = 52;
+  const lastRowY = listStart + players.length * rowH;
+  const footerY = lastRowY + 6;
+  const H = footerY + 58;
+
   const scale = 2;
   const canvas = document.createElement("canvas");
   canvas.width = W * scale;
   canvas.height = H * scale;
   const ctx = canvas.getContext("2d")!;
   ctx.scale(scale, scale);
+  ctx.textBaseline = "alphabetic";
 
-  // Fundo + moldura dourada
-  ctx.fillStyle = "#EDE7D7";
+  // fundo da página + moldura dourada fina
+  ctx.fillStyle = COLORS.page;
   ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = COLORS.gold;
-  roundRect(ctx, 16, 16, W - 32, H - 32, 18);
+  roundRect(ctx, 14, 14, W - 28, H - 28, 20);
   ctx.fill();
   ctx.fillStyle = COLORS.paper;
-  roundRect(ctx, 24, 24, W - 48, H - 48, 14);
+  roundRect(ctx, 14 + FRAME, 14 + FRAME, W - 28 - FRAME * 2, H - 28 - FRAME * 2, 14);
   ctx.fill();
 
-  const PAD = 56;
-  let y = 78;
-
-  // Topo: marca + seed
-  ctx.textBaseline = "alphabetic";
+  // ---- topo: marca + seed ----
   ctx.fillStyle = COLORS.ink;
-  ctx.font = '700 30px Archivo, sans-serif';
+  ctx.font = "800 30px Archivo, sans-serif";
   ctx.textAlign = "left";
-  ctx.fillText("7", PAD, y);
+  ctx.fillText("7", PAD, yBrand);
   const w7 = ctx.measureText("7").width;
   ctx.fillStyle = COLORS.gold;
-  ctx.fillText("x", PAD + w7, y);
+  ctx.fillText("x", PAD + w7, yBrand);
   const wx = ctx.measureText("x").width;
   ctx.fillStyle = COLORS.ink;
-  ctx.fillText("1", PAD + w7 + wx, y);
+  ctx.fillText("1", PAD + w7 + wx, yBrand);
 
   ctx.fillStyle = COLORS.soft;
   ctx.font = "600 18px Inter, sans-serif";
   ctx.textAlign = "right";
-  ctx.fillText(`seed #${cup.seed}`, W - PAD, y);
+  ctx.fillText(`seed #${cup.seed}`, W - PAD, yBrand);
 
-  // Linha
-  y += 18;
+  // linha
   ctx.strokeStyle = COLORS.line;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(PAD, y);
-  ctx.lineTo(W - PAD, y);
+  ctx.moveTo(PAD, yDivider);
+  ctx.lineTo(W - PAD, yDivider);
   ctx.stroke();
 
-  // Resultado
-  y += 64;
+  // ---- resultado ----
   ctx.textAlign = "center";
   ctx.fillStyle = COLORS.ink;
-  ctx.font = "800 40px Archivo, sans-serif";
-  const outcomeText =
-    cup.outcome === "CAMPEÃO"
-      ? "CAMPEÃO"
-      : cup.outcome === "VICE"
-      ? "VICE-CAMPEÃO"
-      : "ELIMINADO";
-  ctx.fillText(outcomeText, W / 2, y);
+  ctx.font = "800 42px Archivo, sans-serif";
+  ctx.fillText(OUTCOME_TEXT[cup.outcome], W / 2, yOutcome);
 
-  // Recorde grande (gold 3d)
-  y += 132;
+  // recorde grande (gold 3d)
   const record = `${cup.wins}-${cup.losses}`;
-  ctx.font = "112px Anton, sans-serif";
+  ctx.font = "108px Anton, sans-serif";
   ctx.fillStyle = "#7C5713";
-  ctx.fillText(record, W / 2 + 4, y + 4);
+  ctx.fillText(record, W / 2 + 3, yRecord + 3);
   ctx.fillStyle = COLORS.goldLight;
-  ctx.fillText(record, W / 2, y);
+  ctx.fillText(record, W / 2, yRecord);
 
-  // Caixa de estatísticas (2x2)
-  y += 40;
+  // ---- caixa de estatísticas (2x2, divisores completos) ----
   const boxX = PAD;
   const boxW = W - PAD * 2;
-  const boxH = 200;
   ctx.strokeStyle = COLORS.ink;
   ctx.lineWidth = 2.5;
-  roundRect(ctx, boxX, y, boxW, boxH, 8);
+  roundRect(ctx, boxX, boxY, boxW, boxH, 10);
   ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(boxX + boxW / 2, y + 16);
-  ctx.lineTo(boxX + boxW / 2, y + boxH - 16);
-  ctx.moveTo(boxX + 20, y + boxH / 2);
-  ctx.lineTo(boxX + boxW - 20, y + boxH / 2);
+  // divisores que cruzam a caixa
   ctx.strokeStyle = COLORS.line;
   ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(boxX + boxW / 2, boxY + 12);
+  ctx.lineTo(boxX + boxW / 2, boxY + boxH - 12);
+  ctx.moveTo(boxX + 12, boxY + boxH / 2);
+  ctx.lineTo(boxX + boxW - 12, boxY + boxH / 2);
   ctx.stroke();
 
-  const stat = (
-    cx: number,
-    cy: number,
-    value: string,
-    label: string,
-    gold = false
-  ) => {
+  const stat = (cx: number, cy: number, value: string, label: string, gold = false) => {
     ctx.textAlign = "center";
     ctx.fillStyle = gold ? COLORS.gold : COLORS.ink;
-    ctx.font = "62px Anton, sans-serif";
+    ctx.font = "52px Anton, sans-serif";
     ctx.fillText(value, cx, cy);
     ctx.fillStyle = COLORS.soft;
     ctx.font = "600 15px Inter, sans-serif";
     ctx.fillText(label.toUpperCase(), cx, cy + 26);
   };
-  const qx = boxX + boxW * 0.25;
-  const qx2 = boxX + boxW * 0.75;
-  stat(qx, y + 70, String(cup.goalsFor), "Gols pró");
-  stat(qx2, y + 70, String(cup.goalsAgainst), "Sofridos", true);
-  stat(qx, y + 70 + boxH / 2, String(cup.overall), "Overall");
-  stat(qx2, y + 70 + boxH / 2, String(cup.wins), "Vitórias", true);
+  const cxL = boxX + boxW * 0.25;
+  const cxR = boxX + boxW * 0.75;
+  const cyTop = boxY + boxH * 0.25 + 16;
+  const cyBot = boxY + boxH * 0.75 + 16;
+  stat(cxL, cyTop, String(cup.goalsFor), "Gols pró");
+  stat(cxR, cyTop, String(cup.goalsAgainst), "Sofridos", true);
+  stat(cxL, cyBot, String(cup.overall), "Overall");
+  stat(cxR, cyBot, String(cup.wins), "Vitórias", true);
 
-  // Lista de jogadores
-  y += boxH + 40;
-  const rowH = 52;
+  // ---- lista de jogadores ----
+  let y = listStart;
   for (const slot of lineup) {
     const p = slot.player;
     if (!p) continue;
     const isMvp = p.id === cup.mvp.id;
     const rowX = PAD;
     const rowW = W - PAD * 2;
+
     if (isMvp) {
       ctx.fillStyle = "rgba(200,151,46,0.10)";
-      roundRect(ctx, rowX, y - rowH + 14, rowW, rowH - 8, 8);
+      roundRect(ctx, rowX, y - rowH + 14, rowW, rowH - 8, 9);
       ctx.fill();
       ctx.strokeStyle = COLORS.gold;
       ctx.lineWidth = 2;
-      roundRect(ctx, rowX, y - rowH + 14, rowW, rowH - 8, 8);
+      roundRect(ctx, rowX, y - rowH + 14, rowW, rowH - 8, 9);
       ctx.stroke();
     } else {
       ctx.strokeStyle = COLORS.line;
@@ -208,44 +208,43 @@ export async function renderCardBlob(
     ctx.textAlign = "left";
     ctx.fillStyle = COLORS.soft;
     ctx.font = "700 18px Archivo, sans-serif";
-    ctx.fillText(String(p.shirtNumber), rowX + 16, y);
+    ctx.fillText(String(p.shirtNumber), rowX + 18, y);
 
     ctx.fillStyle = isMvp ? COLORS.gold : COLORS.ink;
     ctx.font = "700 22px Archivo, sans-serif";
     ctx.fillText(p.shortName, rowX + 58, y);
 
-    // bandeira do Brasil desenhada + BRA + ano (da direita p/ esquerda)
-    const rightEdge = rowX + rowW - 16;
+    // bandeira + BRA + ano (da direita p/ esquerda)
+    const rightEdge = rowX + rowW - 18;
     ctx.textAlign = "right";
     ctx.font = "700 18px Inter, sans-serif";
     ctx.fillStyle = COLORS.ink;
     ctx.fillText(String(p.year), rightEdge, y);
     const yearW = ctx.measureText(String(p.year)).width;
 
-    const braRight = rightEdge - yearW - 6;
+    const braRight = rightEdge - yearW - 7;
     ctx.font = "600 18px Inter, sans-serif";
     ctx.fillStyle = COLORS.soft;
     ctx.fillText("BRA", braRight, y);
     const braW = ctx.measureText("BRA").width;
 
-    drawBrazilFlag(ctx, braRight - braW - 30, y - 13, 24, 16);
+    drawBrazilFlag(ctx, braRight - braW - 32, y - 14, 25, 17);
     ctx.textAlign = "left";
 
     y += rowH;
   }
 
-  // Rodapé
-  y += 10;
+  // ---- rodapé ----
   ctx.strokeStyle = COLORS.line;
   ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.moveTo(PAD, y - 24);
-  ctx.lineTo(W - PAD, y - 24);
+  ctx.moveTo(PAD, footerY - 22);
+  ctx.lineTo(W - PAD, footerY - 22);
   ctx.stroke();
   ctx.textAlign = "center";
   ctx.fillStyle = COLORS.soft;
   ctx.font = "600 18px Inter, sans-serif";
-  ctx.fillText(`7x1  ·  ${formationKey}  ·  monte o seu`, W / 2, y + 6);
+  ctx.fillText(`7x1  ·  ${formationKey}  ·  monte o seu`, W / 2, footerY + 8);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob((blob) => {
@@ -255,7 +254,6 @@ export async function renderCardBlob(
   });
 }
 
-/** Gera e baixa o card como PNG */
 export async function downloadCard(
   lineup: LineupSlot[],
   cup: CupResult,

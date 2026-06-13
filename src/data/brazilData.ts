@@ -275,7 +275,7 @@ const RAW: Raw[] = [
 
   // ===================== 2026 (projetado) =====================
   mk("bento-2026", "Bento Krepski", "Bento", 1, "GOL", 2026, 80, { rarity: "raro" }),
-  mk("vanderson-2026", "Vanderson", "Vanderson", 2, "LD", 2026, 78),
+  mk("wesley-2026", "Wesley França", "Wesley", 2, "LD", 2026, 78),
   mk("gabrielmagalhaes-2026", "Gabriel Magalhães", "Gabriel M.", 3, "ZAG", 2026, 82, { rarity: "raro" }),
   mk("wendell-2026", "Wendell Borges", "Wendell", 6, "LE", 2026, 77),
   mk("andre-2026", "André Trindade", "André", 5, "VOL", 2026, 80),

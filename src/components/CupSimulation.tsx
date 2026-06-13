@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CupResult, MatchResult } from "../types";
 import Flag from "./Flag";
 
@@ -17,66 +17,10 @@ const ROUND_LABEL: Record<MatchResult["round"], string> = {
   FINAL: "FINAL",
 };
 
-function MatchRow({ m }: { m: MatchResult }) {
-  const win = m.won;
-  return (
-    <div className="animate-flip overflow-hidden rounded-xl border border-ink/12 bg-paper-card shadow-card">
-      {/* cabeçalho do jogo */}
-      <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-2.5">
-        <span className="w-14 shrink-0 font-sans text-[10px] font-bold uppercase tracking-wider text-ink-soft">
-          {ROUND_LABEL[m.round]}
-        </span>
-        <span className="font-sans text-[10px] text-ink-soft">vs</span>
-        <Flag code={m.opponent.abbr} />
-        <span className="font-head text-sm font-bold text-ink">
-          {m.opponent.abbr}
-        </span>
-        <span className="font-sans text-[10px] text-ink-soft">
-          {m.opponent.year}
-        </span>
-        <span
-          className={[
-            "ml-auto flex items-center gap-1.5 font-head text-lg font-extrabold",
-            win ? "text-grass-dark" : "text-brick",
-          ].join(" ")}
-        >
-          {m.goalsFor}-{m.goalsAgainst}
-          <span className="text-sm">{win ? "✓" : "✗"}</span>
-        </span>
-      </div>
+type GoalItem = { type: "for" | "against"; minute: number; scorer: string };
+type Ev = { kind: "match"; mi: number } | ({ kind: "goal"; mi: number } & GoalItem);
 
-      {/* lista de gols */}
-      {(m.scorers.length > 0 || m.conceded.length > 0) && (
-        <div className="grid grid-cols-2 gap-x-3 px-4 py-2.5">
-          <ul className="space-y-1">
-            {m.scorers.map((g, i) => (
-              <li key={i} className="flex items-center gap-2 text-[12px]">
-                <span className="w-7 shrink-0 text-right font-head text-ink-soft">
-                  {g.minute}'
-                </span>
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-grass" />
-                <span className="truncate font-semibold text-ink">
-                  {g.scorer}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <ul className="space-y-1">
-            {m.conceded.map((g, i) => (
-              <li key={i} className="flex items-center gap-2 text-[12px]">
-                <span className="w-7 shrink-0 text-right font-head text-ink-soft">
-                  {g.minute}'
-                </span>
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brick" />
-                <span className="truncate text-ink-soft">{g.scorer}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
+const STEP_MS = 550;
 
 export default function CupSimulation({
   cup,
@@ -84,31 +28,53 @@ export default function CupSimulation({
   onSeeCard,
   onHome,
 }: CupSimulationProps) {
-  const [revealed, setRevealed] = useState(0);
+  // monta a timeline plana: início do jogo, depois cada gol (em ordem de minuto)
+  const { events, perMatchGoals } = useMemo(() => {
+    const events: Ev[] = [];
+    const perMatchGoals: number[] = [];
+    cup.matches.forEach((m, mi) => {
+      events.push({ kind: "match", mi });
+      const items: GoalItem[] = [
+        ...m.scorers.map((g) => ({ type: "for" as const, minute: g.minute, scorer: g.scorer })),
+        ...m.conceded.map((g) => ({ type: "against" as const, minute: g.minute, scorer: g.scorer })),
+      ].sort((a, b) => a.minute - b.minute);
+      perMatchGoals[mi] = items.length;
+      items.forEach((it) => events.push({ kind: "goal", mi, ...it }));
+    });
+    return { events, perMatchGoals };
+  }, [cup]);
+
+  const [step, setStep] = useState(0);
   const timer = useRef<number | null>(null);
 
   useEffect(() => {
-    setRevealed(0);
+    setStep(0);
     if (timer.current) window.clearInterval(timer.current);
     timer.current = window.setInterval(() => {
-      setRevealed((n) => {
-        if (n >= cup.matches.length) {
+      setStep((n) => {
+        if (n >= events.length) {
           if (timer.current) window.clearInterval(timer.current);
           return n;
         }
         return n + 1;
       });
-    }, 850);
+    }, STEP_MS);
     return () => {
       if (timer.current) window.clearInterval(timer.current);
     };
-  }, [cup]);
+  }, [events]);
 
-  const allShown = revealed >= cup.matches.length;
+  const allShown = step >= events.length;
 
   function skip() {
     if (timer.current) window.clearInterval(timer.current);
-    setRevealed(cup.matches.length);
+    setStep(events.length);
+  }
+
+  const shown = events.slice(0, step);
+  const startedMatches: number[] = [];
+  for (const e of shown) {
+    if (e.kind === "match" && !startedMatches.includes(e.mi)) startedMatches.push(e.mi);
   }
 
   return (
@@ -138,12 +104,86 @@ export default function CupSimulation({
       </h2>
 
       <div className="space-y-2.5">
-        {cup.matches.slice(0, revealed).map((m, i) => (
-          <MatchRow key={i} m={m} />
-        ))}
+        {startedMatches.map((mi) => {
+          const m = cup.matches[mi];
+          const goalsShown = shown.filter(
+            (e): e is Extract<Ev, { kind: "goal" }> => e.kind === "goal" && e.mi === mi
+          );
+          const forShown = goalsShown.filter((g) => g.type === "for");
+          const againstShown = goalsShown.filter((g) => g.type === "against");
+          const complete = goalsShown.length >= perMatchGoals[mi];
+
+          return (
+            <div
+              key={mi}
+              className="animate-flip overflow-hidden rounded-xl border border-ink/12 bg-paper-card shadow-card"
+            >
+              <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-2.5">
+                <span className="w-14 shrink-0 font-sans text-[10px] font-bold uppercase tracking-wider text-ink-soft">
+                  {ROUND_LABEL[m.round]}
+                </span>
+                <span className="font-sans text-[10px] text-ink-soft">vs</span>
+                <Flag code={m.opponent.abbr} />
+                <span className="font-head text-sm font-bold text-ink">
+                  {m.opponent.abbr}
+                </span>
+                <span className="font-sans text-[10px] text-ink-soft">
+                  {m.opponent.year}
+                </span>
+                <span
+                  className={[
+                    "ml-auto flex items-center gap-1.5 font-head text-lg font-extrabold tabular-nums",
+                    !complete
+                      ? "text-ink-soft"
+                      : m.won
+                      ? "text-grass-dark"
+                      : "text-brick",
+                  ].join(" ")}
+                >
+                  {forShown.length}-{againstShown.length}
+                  {complete && <span className="text-sm">{m.won ? "✓" : "✗"}</span>}
+                </span>
+              </div>
+
+              {goalsShown.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-3 px-4 py-2.5">
+                  <ul className="space-y-1">
+                    {forShown.map((g, i) => (
+                      <li
+                        key={`f${i}`}
+                        className="flex animate-slide-in items-center gap-2 text-[12px]"
+                      >
+                        <span className="w-7 shrink-0 text-right font-head text-ink-soft">
+                          {g.minute}'
+                        </span>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-grass" />
+                        <span className="truncate font-semibold text-ink">{g.scorer}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <ul className="space-y-1">
+                    {againstShown.map((g, i) => (
+                      <li
+                        key={`a${i}`}
+                        className="flex animate-slide-in items-center gap-2 text-[12px]"
+                      >
+                        <span className="w-7 shrink-0 text-right font-head text-ink-soft">
+                          {g.minute}'
+                        </span>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brick" />
+                        <span className="truncate text-ink-soft">{g.scorer}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          );
+        })}
+
         {!allShown && (
           <div className="rounded-xl border border-dashed border-ink/20 px-4 py-4 text-center font-sans text-sm text-ink-soft animate-shuffle">
-            Apitando o próximo jogo…
+            ⚽ Bola rolando…
           </div>
         )}
       </div>
