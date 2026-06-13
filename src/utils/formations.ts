@@ -23,17 +23,33 @@ export const FORMATION_ORDER: FormationKey[] = [
   "3-4-3",
 ];
 
-// Banda vertical (y, em %) por categoria de posição. Quanto menor, mais perto do gol adversário.
-const Y_BAND: Record<Position, number> = {
-  GOL: 90,
-  LD: 70,
-  ZAG: 72,
-  LE: 70,
-  VOL: 55,
-  MEI: 42,
-  PE: 28,
-  PD: 28,
-  CA: 16,
+// Linha (de trás p/ frente) de cada posição. Gol embaixo (defesa do nosso time).
+const ROW_OF: Record<Position, number> = {
+  GOL: 0,
+  LD: 1,
+  ZAG: 1,
+  LE: 1,
+  VOL: 2,
+  MEI: 3,
+  PE: 4,
+  PD: 4,
+  CA: 5,
+};
+
+// y (%) por linha — 0 (gol, embaixo) … 5 (ataque, em cima)
+const ROW_Y = [90, 73, 58, 44, 30, 16];
+
+// Tendência horizontal: -1 esquerda, 0 centro, +1 direita
+const SIDE_OF: Record<Position, number> = {
+  GOL: 0,
+  LE: -1,
+  LD: 1,
+  ZAG: 0,
+  VOL: 0,
+  MEI: 0,
+  PE: -1,
+  PD: 1,
+  CA: 0,
 };
 
 export interface FieldCoord {
@@ -42,24 +58,31 @@ export interface FieldCoord {
 }
 
 /**
- * Gera coordenadas (x,y em %) para cada slot da formação, distribuindo na
- * horizontal os jogadores que ficam na mesma linha vertical.
+ * Coordenadas (x,y em %) de cada slot, agrupando por LINHA e distribuindo na
+ * horizontal (laterais nas pontas, centrais no meio) — sem sobreposição.
  */
 export function fieldCoords(slots: Position[]): FieldCoord[] {
-  // Agrupa índices por banda y
-  const byBand = new Map<number, number[]>();
+  // agrupa índices por linha
+  const rows = new Map<number, number[]>();
   slots.forEach((pos, i) => {
-    const y = Y_BAND[pos];
-    if (!byBand.has(y)) byBand.set(y, []);
-    byBand.get(y)!.push(i);
+    const r = ROW_OF[pos];
+    if (!rows.has(r)) rows.set(r, []);
+    rows.get(r)!.push(i);
   });
 
   const coords: FieldCoord[] = new Array(slots.length);
-  for (const [y, idxs] of byBand) {
-    const n = idxs.length;
-    idxs.forEach((slotIdx, k) => {
-      // distribui de forma simétrica: margens de 16% a 84%
-      const x = n === 1 ? 50 : 18 + (k * (64 / (n - 1)));
+  for (const [row, idxs] of rows) {
+    // ordena dentro da linha: esquerda → centro → direita (mantém estável)
+    const ordered = [...idxs].sort((a, b) => {
+      const sa = SIDE_OF[slots[a]];
+      const sb = SIDE_OF[slots[b]];
+      if (sa !== sb) return sa - sb;
+      return a - b;
+    });
+    const n = ordered.length;
+    const y = ROW_Y[row];
+    ordered.forEach((slotIdx, k) => {
+      const x = n === 1 ? 50 : 15 + k * (70 / (n - 1));
       coords[slotIdx] = { x, y };
     });
   }

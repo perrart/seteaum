@@ -91,10 +91,8 @@ export default function GamePage({
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <FieldView lineup={lineup} highlightIndex={highlight} />
-
-        <div>
+      <div className="flex flex-col gap-6 md:grid md:grid-cols-2">
+        <div className="md:order-2">
           {complete ? (
             <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-ink/15 bg-paper-card px-6 py-10 text-center shadow-card animate-pop-in">
               <p className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
@@ -122,6 +120,10 @@ export default function GamePage({
               onReroll={handleReroll}
             />
           )}
+        </div>
+
+        <div className="md:order-1">
+          <FieldView lineup={lineup} highlightIndex={highlight} />
         </div>
       </div>
     </div>

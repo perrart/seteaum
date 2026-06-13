@@ -1,5 +1,29 @@
 import type { CupResult, LineupSlot, FormationKey } from "../types";
-import { BRAZIL_FLAG } from "../data/brazilData";
+
+function drawBrazilFlag(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number
+) {
+  ctx.save();
+  ctx.fillStyle = "#009C3B";
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = "#FFDF00";
+  ctx.beginPath();
+  ctx.moveTo(x + w / 2, y + 2);
+  ctx.lineTo(x + w - 3, y + h / 2);
+  ctx.lineTo(x + w / 2, y + h - 2);
+  ctx.lineTo(x + 3, y + h / 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#002776";
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, h * 0.26, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
 
 const COLORS = {
   paper: "#FBF8EF",
@@ -190,10 +214,22 @@ export async function renderCardBlob(
     ctx.font = "700 22px Archivo, sans-serif";
     ctx.fillText(p.shortName, rowX + 58, y);
 
+    // bandeira do Brasil desenhada + BRA + ano (da direita p/ esquerda)
+    const rightEdge = rowX + rowW - 16;
     ctx.textAlign = "right";
-    ctx.fillStyle = COLORS.soft;
+    ctx.font = "700 18px Inter, sans-serif";
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillText(String(p.year), rightEdge, y);
+    const yearW = ctx.measureText(String(p.year)).width;
+
+    const braRight = rightEdge - yearW - 6;
     ctx.font = "600 18px Inter, sans-serif";
-    ctx.fillText(`${BRAZIL_FLAG} BRA ${p.year}`, rowX + rowW - 16, y);
+    ctx.fillStyle = COLORS.soft;
+    ctx.fillText("BRA", braRight, y);
+    const braW = ctx.measureText("BRA").width;
+
+    drawBrazilFlag(ctx, braRight - braW - 30, y - 13, 24, 16);
+    ctx.textAlign = "left";
 
     y += rowH;
   }

@@ -1,4 +1,5 @@
 import type { DrawOption, Player } from "../types";
+import Flag from "./Flag";
 
 interface DrawListProps {
   options: DrawOption[];
@@ -21,23 +22,15 @@ export default function DrawList({
 }: DrawListProps) {
   return (
     <div>
-      <div className="flex items-end justify-between">
-        <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
-          Escolha um jogador
-        </h3>
-        <button
-          onClick={onReroll}
-          disabled={rerollsLeft <= 0 || rolling}
-          className="font-sans text-[11px] font-semibold uppercase tracking-wider text-ink-soft transition enabled:hover:text-scarlet disabled:opacity-40"
-        >
-          ↻ Re-sortear · {rerollsLeft}
-        </button>
-      </div>
+      <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+        Escolha um jogador
+      </h3>
 
       <div className="mt-3 space-y-2">
         {options.map((opt, i) => {
           const p = opt.player;
-          const disabled = !opt.selectable || rolling;
+          const faded = !opt.selectable;
+          const disabled = faded || rolling;
           return (
             <button
               key={p.id}
@@ -45,21 +38,27 @@ export default function DrawList({
               disabled={disabled}
               style={{ animationDelay: `${i * 45}ms` }}
               className={[
-                "flex w-full animate-slide-in items-center gap-3 rounded-xl border bg-paper-card px-3 py-3 text-left transition",
-                disabled
-                  ? "cursor-not-allowed border-ink/10 opacity-45"
-                  : "border-ink/15 hover:border-ink hover:shadow-card active:scale-[0.99]",
+                "flex w-full animate-slide-in items-center gap-3 rounded-xl border px-3 py-3 text-left transition",
+                faded
+                  ? "cursor-not-allowed border-ink/10 bg-paper-deep/40 opacity-40 saturate-0"
+                  : "border-ink/15 bg-paper-card hover:border-ink hover:shadow-card active:scale-[0.99]",
               ].join(" ")}
             >
               <span className="w-8 shrink-0 text-center font-head text-sm font-bold text-ink-soft">
                 #{p.shirtNumber}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate font-head text-base font-extrabold text-ink">
+                <span
+                  className={[
+                    "block truncate font-head text-base font-extrabold",
+                    faded ? "text-ink-soft line-through" : "text-ink",
+                  ].join(" ")}
+                >
                   {p.shortName}
                 </span>
-                <span className="block font-sans text-[11px] text-ink-soft">
-                  Copa {p.year}
+                <span className="mt-0.5 flex items-center gap-1.5 font-sans text-[11px] text-ink-soft">
+                  <Flag code="BRA" />
+                  {faded ? "posição já preenchida" : `Copa ${p.year}`}
                 </span>
               </span>
               <span className="shrink-0 font-sans text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
@@ -73,7 +72,19 @@ export default function DrawList({
         })}
       </div>
 
-      <p className="mt-3 text-center font-sans text-[11px] text-ink-soft/80">
+      <button
+        onClick={onReroll}
+        disabled={rerollsLeft <= 0 || rolling}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-ink/20 bg-paper-card px-5 py-3.5 font-head text-base font-extrabold uppercase tracking-wide text-ink transition enabled:hover:border-ink enabled:hover:bg-ink/5 active:scale-[0.99] disabled:opacity-40"
+      >
+        <span className="text-xl leading-none">🎲</span>
+        Re-sortear
+        <span className="font-sans text-xs font-semibold text-ink-soft">
+          {rerollsLeft} restantes
+        </span>
+      </button>
+
+      <p className="mt-2 text-center font-sans text-[11px] text-ink-soft/80">
         Jogadores apagados já têm a posição preenchida no seu time.
       </p>
     </div>

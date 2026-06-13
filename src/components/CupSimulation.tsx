@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { CupResult, MatchResult } from "../types";
+import Flag from "./Flag";
 
 interface CupSimulationProps {
   cup: CupResult;
@@ -19,24 +20,23 @@ const ROUND_LABEL: Record<MatchResult["round"], string> = {
 function MatchRow({ m }: { m: MatchResult }) {
   const win = m.won;
   return (
-    <div className="animate-flip rounded-xl border border-ink/12 bg-paper-card px-4 py-3 shadow-card">
-      <div className="flex items-center gap-3">
-        <span className="w-16 shrink-0 font-sans text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+    <div className="animate-flip overflow-hidden rounded-xl border border-ink/12 bg-paper-card shadow-card">
+      {/* cabeçalho do jogo */}
+      <div className="flex items-center gap-2.5 border-b border-ink/10 px-4 py-2.5">
+        <span className="w-14 shrink-0 font-sans text-[10px] font-bold uppercase tracking-wider text-ink-soft">
           {ROUND_LABEL[m.round]}
         </span>
-        <span className="font-sans text-[11px] text-ink-soft">vs</span>
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="text-base leading-none">{m.opponent.flag}</span>
-          <span className="font-head text-sm font-bold text-ink">
-            {m.opponent.abbr}
-          </span>
-          <span className="font-sans text-[11px] text-ink-soft">
-            {m.opponent.year}
-          </span>
+        <span className="font-sans text-[10px] text-ink-soft">vs</span>
+        <Flag code={m.opponent.abbr} />
+        <span className="font-head text-sm font-bold text-ink">
+          {m.opponent.abbr}
+        </span>
+        <span className="font-sans text-[10px] text-ink-soft">
+          {m.opponent.year}
         </span>
         <span
           className={[
-            "flex items-center gap-1.5 font-head text-lg font-extrabold",
+            "ml-auto flex items-center gap-1.5 font-head text-lg font-extrabold",
             win ? "text-grass-dark" : "text-brick",
           ].join(" ")}
         >
@@ -45,24 +45,33 @@ function MatchRow({ m }: { m: MatchResult }) {
         </span>
       </div>
 
+      {/* lista de gols */}
       {(m.scorers.length > 0 || m.conceded.length > 0) && (
-        <div className="mt-1.5 space-y-0.5 pl-16 font-sans text-[11px] leading-snug">
-          {m.scorers.length > 0 && (
-            <p className="text-ink">
-              <span className="font-semibold uppercase tracking-wider text-ink-soft">
-                Gols{" "}
-              </span>
-              {m.scorers.map((g) => `${g.scorer} ${g.minute}'`).join(", ")}
-            </p>
-          )}
-          {m.conceded.length > 0 && (
-            <p className="text-ink-soft">
-              <span className="font-semibold uppercase tracking-wider">
-                Sofreu{" "}
-              </span>
-              {m.conceded.map((g) => `${g.scorer} ${g.minute}'`).join(", ")}
-            </p>
-          )}
+        <div className="grid grid-cols-2 gap-x-3 px-4 py-2.5">
+          <ul className="space-y-1">
+            {m.scorers.map((g, i) => (
+              <li key={i} className="flex items-center gap-2 text-[12px]">
+                <span className="w-7 shrink-0 text-right font-head text-ink-soft">
+                  {g.minute}'
+                </span>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-grass" />
+                <span className="truncate font-semibold text-ink">
+                  {g.scorer}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <ul className="space-y-1">
+            {m.conceded.map((g, i) => (
+              <li key={i} className="flex items-center gap-2 text-[12px]">
+                <span className="w-7 shrink-0 text-right font-head text-ink-soft">
+                  {g.minute}'
+                </span>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brick" />
+                <span className="truncate text-ink-soft">{g.scorer}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
@@ -128,7 +137,7 @@ export default function CupSimulation({
         Jogo a jogo
       </h2>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {cup.matches.slice(0, revealed).map((m, i) => (
           <MatchRow key={i} m={m} />
         ))}
@@ -139,12 +148,11 @@ export default function CupSimulation({
         )}
       </div>
 
-      {/* Painel-resumo */}
       {allShown && (
         <div className="mt-6 animate-fade-up">
           <div className="rounded-2xl bg-ink p-6 text-paper shadow-panel">
             <p className="font-sans text-[11px] font-semibold uppercase tracking-[0.2em] text-paper/60">
-              {cup.wins} - {cup.losses}
+              Campanha encerrada
             </p>
             <p className="mt-1 font-display text-6xl leading-none gold-3d">
               {cup.wins}-{cup.losses}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CupResult, LineupSlot, FormationKey } from "../types";
-import { BRAZIL_FLAG } from "../data/brazilData";
+import Flag from "./Flag";
 import { downloadCard } from "../utils/cardCanvas";
 import { buildShareUrl } from "../utils/gameLogic";
 
@@ -142,8 +142,8 @@ export default function ShareCard({
                   >
                     {p.shortName}
                   </span>
-                  <span className="shrink-0 font-sans text-xs font-semibold text-ink-soft">
-                    {BRAZIL_FLAG} BRA{" "}
+                  <span className="flex shrink-0 items-center gap-1.5 font-sans text-xs font-semibold text-ink-soft">
+                    <Flag code="BRA" /> BRA{" "}
                     <span className="text-ink">{p.year}</span>
                   </span>
                 </div>
