@@ -1,69 +1,119 @@
 import { useEffect, useState } from "react";
-import type { LineupSlot, Screen, SimulationResult } from "./types";
-import { parseSharedLineup, simulateMatch } from "./utils/gameLogic";
+import type { Screen, FormationKey, LineupSlot, CupResult } from "./types";
+import { simulateCup, parseSharedLineup } from "./utils/gameLogic";
+import Header from "./components/Header";
 import HomePage from "./components/HomePage";
+import FormationPicker from "./components/FormationPicker";
 import GamePage from "./components/GamePage";
-import ResultPage from "./components/ResultPage";
+import CupSimulation from "./components/CupSimulation";
+import ShareCard from "./components/ShareCard";
+import FieldView from "./components/FieldView";
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("home");
+  const [formationKey, setFormationKey] = useState<FormationKey>("4-3-3");
   const [lineup, setLineup] = useState<LineupSlot[] | null>(null);
-  const [result, setResult] = useState<SimulationResult | null>(null);
+  const [cup, setCup] = useState<CupResult | null>(null);
 
-  // Detecta ?team=... ao carregar e abre a tela de time compartilhado.
+  // Time compartilhado via ?f=...&team=...
   useEffect(() => {
     const shared = parseSharedLineup(window.location.search);
     if (shared) {
-      try {
-        const simulated = simulateMatch(shared);
-        setLineup(shared);
-        setResult(simulated);
-        setScreen("shared");
-      } catch {
-        // Link inválido: ignora e segue para a home.
-      }
+      setLineup(shared.lineup);
+      setFormationKey(shared.formationKey);
+      setScreen("shared");
     }
   }, []);
 
-  function goHome() {
-    // Limpa a query string para não reabrir o time compartilhado.
+  function clearQuery() {
     if (window.location.search) {
       window.history.replaceState(null, "", window.location.pathname);
     }
-    setScreen("home");
   }
 
-  function startGame() {
-    if (window.location.search) {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
+  function goHome() {
+    clearQuery();
+    setScreen("home");
     setLineup(null);
-    setResult(null);
+    setCup(null);
+  }
+
+  function startFlow() {
+    clearQuery();
+    setLineup(null);
+    setCup(null);
+    setScreen("formation");
+  }
+
+  function confirmFormation(key: FormationKey) {
+    setFormationKey(key);
     setScreen("game");
   }
 
-  function finishGame(finalLineup: LineupSlot[], finalResult: SimulationResult) {
+  function handleSimulate(finalLineup: LineupSlot[]) {
     setLineup(finalLineup);
-    setResult(finalResult);
-    setScreen("result");
-    window.scrollTo({ top: 0 });
+    setCup(simulateCup(finalLineup));
+    setScreen("simulation");
   }
 
-  if (screen === "game") {
-    return <GamePage onHome={goHome} onFinish={finishGame} />;
+  function replaySimulation() {
+    if (lineup) setCup(simulateCup(lineup));
   }
 
-  if ((screen === "result" || screen === "shared") && lineup && result) {
-    return (
-      <ResultPage
-        lineup={lineup}
-        result={result}
-        shared={screen === "shared"}
-        onPlayAgain={startGame}
-        onHome={goHome}
-      />
-    );
-  }
+  return (
+    <div className="min-h-full">
+      <Header onHome={goHome} />
 
-  return <HomePage onPlay={startGame} />;
+      {screen === "home" && <HomePage onPlay={startFlow} />}
+
+      {screen === "formation" && (
+        <FormationPicker onConfirm={confirmFormation} onBack={goHome} />
+      )}
+
+      {screen === "game" && (
+        <GamePage
+          formationKey={formationKey}
+          onHome={goHome}
+          onSimulate={handleSimulate}
+        />
+      )}
+
+      {screen === "simulation" && cup && (
+        <CupSimulation
+          cup={cup}
+          onReplay={replaySimulation}
+          onSeeCard={() => setScreen("card")}
+          onHome={goHome}
+        />
+      )}
+
+      {screen === "card" && cup && lineup && (
+        <ShareCard
+          lineup={lineup}
+          cup={cup}
+          formationKey={formationKey}
+          onPlayAgain={startFlow}
+          onHome={goHome}
+        />
+      )}
+
+      {screen === "shared" && lineup && (
+        <div className="mx-auto max-w-md px-4 py-8 text-center animate-fade-up">
+          <p className="font-sans text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+            Seleção compartilhada · {formationKey}
+          </p>
+          <h2 className="mb-5 mt-1 font-head text-2xl font-extrabold tracking-tight text-ink">
+            O Brasil dos sonhos de um amigo
+          </h2>
+          <FieldView lineup={lineup} />
+          <button
+            onClick={startFlow}
+            className="mt-6 w-full rounded-xl bg-scarlet px-6 py-4 font-head text-lg font-extrabold uppercase tracking-wide text-white shadow-card transition hover:bg-scarlet-dark active:scale-[0.99]"
+          >
+            Montar a minha
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }

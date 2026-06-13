@@ -1,12 +1,12 @@
 # ⚽ 7x1
 
-Jogo casual de futebol em **React + TypeScript + Tailwind CSS + Vite**.
-Você monta uma seleção dos sonhos com craques históricos de Copas do Mundo: a cada
-rodada o sistema sorteia **uma seleção + uma edição da Copa**, você escolhe um jogador
-daquele elenco para a posição da vez, completa os 11 e **simula a partida**. O objetivo
-emocional é vencer por **7 a 0**.
+Jogo casual de futebol em **React + TypeScript + Tailwind CSS + Vite**, todo
+centrado na **Seleção Brasileira**. Você escolhe a **formação**, sorteia craques
+de todas as Copas (Pelé, Garrincha, Ronaldo, Romário, Zico, Neymar e cia.), monta
+o seu onze, **simula a campanha jogo a jogo** e gera um **card para compartilhar**.
+O sonho é fechar a Copa com um **7 a 0** e levantar a taça.
 
-Tudo roda 100% no navegador — sem backend, sem imagens externas, dados mockados.
+Tudo roda 100% no navegador — sem backend, sem imagens externas, dados embutidos.
 
 ---
 
@@ -27,28 +27,40 @@ npm run preview  # serve localmente o build de produção
 
 ```
 src/
-  App.tsx                 # máquina de estados das telas (home/jogo/resultado/compartilhado)
+  App.tsx                 # máquina de estados (home → formação → jogo → simulação → card)
   main.tsx
-  data/mockData.ts        # 12 seleções, ~163 jogadores
-  types/index.ts          # tipos centrais (Player, Squad, SimulationResult...)
+  data/brazilData.ts      # elenco histórico da Seleção Brasileira (todas as Copas)
+  types/index.ts          # tipos centrais (Player, Formation, DrawOption, CupResult...)
   utils/
-    gameLogic.ts          # draft, sorteio, simulação, link de compartilhamento
+    formations.ts         # 8 formações + posições no campo
+    gameLogic.ts          # sorteio de 5, escalação, simulação da Copa, seed, link
+    cardCanvas.ts         # gera a imagem PNG do card para download
     rarity.ts             # estilos por raridade
-    flags.ts              # bandeiras (emoji) por seleção/ano
-  components/             # Header, HomePage, GamePage, ResultPage, LineupField, etc.
+  components/             # Header, HomePage, FormationPicker, GamePage, DrawList,
+                          # FieldView, CupSimulation, ShareCard, Footer
 ```
 
 ---
 
 ## 🎮 Como jogar
 
-1. **Role** — o sistema sorteia uma seleção e uma Copa.
-2. **Monte** — escolha um craque compatível com a posição atual (ordem fixa: GOL, LD, ZAG, ZAG, LE, VOL, MEI, MEI, PE, CA, PD).
-3. **Simule** — com os 11 preenchidos, descubra se seu time chega ao 7 a 0.
+1. **Escolha a formação** — 4-3-3, 4-4-2, 4-2-3-1, 4-2-4, 3-5-2, 5-3-2, 4-5-1 ou 3-4-3.
+2. **Sorteie e escale** — a cada rodada aparecem **5 jogadores** (um goleiro, um da
+   defesa, um do meio, um do ataque e um aleatório). Escolha um para preencher a vaga.
+   Quem já tem a posição ocupada no seu time aparece apagado, mas **sempre há pelo
+   menos um selecionável**. Você tem **3 re-sorteios** por rodada.
+3. **Simule a Copa** — com os 11 prontos, aperte **Simular Copa** e acompanhe a
+   campanha jogo a jogo (placar, gols e minutos). Fase de grupos + mata-mata até o título.
+4. **Veja o card** — ao final, gere um card com o time, as estatísticas e o craque da
+   campanha. O botão **Compartilhar imagem** baixa um **PNG** pronto para mandar pros amigos.
 
-Você tem **3 rerolls** por partida. Pode compartilhar o time por um link (`?team=id1,id2,...`)
-que reconstrói a escalação no navegador de quem abrir.
+Dá pra compartilhar o time também por um link (`?f=FORMACAO&team=id1,id2,...`) que
+reconstrói a escalação no navegador de quem abrir.
 
+> Química: como todos são do Brasil, o time fica mais entrosado quando você junta
+> craques da **mesma era** (mesmo ano de Copa).
+
+---
 ---
 
 ## 🌐 Hospedando no GitHub pelo navegador (repositório `seteaum`)

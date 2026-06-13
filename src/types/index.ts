@@ -31,22 +31,68 @@ export interface Player {
   rarity: Rarity;
 }
 
-export interface Squad {
-  id: string;
-  team: string;
-  year: number;
-  /** Emoji da bandeira, usado na UI */
-  flag: string;
-  players: Player[];
-}
-
 export interface LineupSlot {
   id: string;
   position: Position;
   player: Player | null;
 }
 
-export interface SimulationResult {
+// ===== Formações =====
+export type FormationKey =
+  | "4-3-3"
+  | "4-4-2"
+  | "4-2-3-1"
+  | "4-2-4"
+  | "3-5-2"
+  | "5-3-2"
+  | "4-5-1"
+  | "3-4-3";
+
+export interface Formation {
+  key: FormationKey;
+  /** 11 posições, na ordem usada para montar o campo */
+  slots: Position[];
+}
+
+// ===== Sorteio (5 jogadores) =====
+export interface DrawOption {
+  player: Player;
+  /** O jogador cabe em algum slot ainda vazio do time atual? */
+  selectable: boolean;
+}
+
+// ===== Simulação da Copa =====
+export type CupRound =
+  | "GRUPOS"
+  | "OITAVAS"
+  | "QUARTAS"
+  | "SEMI"
+  | "FINAL";
+
+export interface Goal {
+  minute: number;
+  scorer: string; // nome curto
+}
+
+export interface MatchResult {
+  round: CupRound;
+  opponent: { flag: string; abbr: string; name: string; year: number };
+  goalsFor: number;
+  goalsAgainst: number;
+  scorers: Goal[]; // gols do nosso time
+  conceded: Goal[]; // gols sofridos
+  won: boolean;
+}
+
+export type CampaignOutcome =
+  | "CAMPEÃO"
+  | "VICE"
+  | "ELIMINADO";
+
+export interface CupResult {
+  matches: MatchResult[];
+  wins: number;
+  losses: number;
   goalsFor: number;
   goalsAgainst: number;
   overall: number;
@@ -55,20 +101,18 @@ export interface SimulationResult {
   defense: number;
   chemistry: number;
   finalStrength: number;
+  outcome: CampaignOutcome;
+  /** Rótulo descritivo, ex.: "Eliminado nas semifinais" */
+  outcomeLabel: string;
   mvp: Player;
-  message: string;
-  /** Vitória perfeita por 7 a 0 */
-  isPerfect: boolean;
-  /** "win" | "draw" | "loss" para escolher o tom da mensagem */
-  outcome: "win" | "draw" | "loss";
+  seed: string;
 }
 
 /** Telas / estados de navegação do app */
-export type Screen = "home" | "game" | "result" | "shared";
-
-/** Resultado de um sorteio de dado (seleção + Copa) */
-export interface DiceRoll {
-  squad: Squad;
-  /** Jogadores do elenco compatíveis com a posição atual */
-  availablePlayers: Player[];
-}
+export type Screen =
+  | "home"
+  | "formation"
+  | "game"
+  | "simulation"
+  | "card"
+  | "shared";

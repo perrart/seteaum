@@ -2,60 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    color-scheme: dark;
-  }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
-  body {
-    @apply bg-pitch-950 text-chalk font-sans antialiased;
-    /* Textura sutil de gramado: faixas verticais quase imperceptíveis */
-    background-image:
-      radial-gradient(
-        circle at 50% -10%,
-        rgba(24, 184, 92, 0.16),
-        transparent 60%
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(255, 255, 255, 0.012) 0px,
-        rgba(255, 255, 255, 0.012) 60px,
-        transparent 60px,
-        transparent 120px
-      );
-    background-attachment: fixed;
-  }
-
-  ::selection {
-    @apply bg-turf/40 text-chalk;
-  }
+:root {
+  color-scheme: light;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-  /* Esconde scrollbar mantendo o scroll (painel de jogadores) */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #17140f;
+  background-color: #f2eee1;
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(0, 0, 0, 0.04), transparent 40%),
+    radial-gradient(circle at 88% 92%, rgba(0, 0, 0, 0.04), transparent 40%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Numeral display com leve relevo dourado */
+.gold-3d {
+  color: #e7be4d;
+  text-shadow:
+    1px 1px 0 #9a6f1c,
+    2px 2px 0 #7c5713,
+    3px 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
   }
 }

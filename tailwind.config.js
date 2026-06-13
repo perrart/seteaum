@@ -4,59 +4,64 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta "Copa dos Sonhos"
-        pitch: {
-          950: "#06100A", // fundo principal (verde-petróleo quase preto)
-          900: "#0A1A11",
-          800: "#0F2417",
-          700: "#143020",
+        // Tema editorial / impresso
+        paper: {
+          DEFAULT: "#F2EEE1", // fundo
+          card: "#FBF8EF", // cartões claros
+          deep: "#E9E3D2", // tom levemente mais escuro
         },
-        turf: {
-          DEFAULT: "#18B85C", // verde-gramado primário
-          dark: "#0E7A3C",
-          light: "#3CE07F",
+        ink: {
+          DEFAULT: "#17140F", // quase-preto (texto / painéis)
+          soft: "#6E665A", // texto secundário
+          line: "#1714101f", // linhas/bordas
         },
-        chalk: "#EAF4EC", // branco-giz das linhas do campo
-        trophy: {
-          DEFAULT: "#FFC53D", // ouro do troféu (raridade lendária / MVP)
-          dark: "#E0A21A",
+        gold: {
+          DEFAULT: "#C8972E",
+          light: "#E7BE4D",
+          dark: "#9A6F1C",
         },
-        flash: "#B6FF4D", // verde-limão de destaque (placar)
+        scarlet: { DEFAULT: "#E8472B", dark: "#C5371E" },
+        grass: { DEFAULT: "#2F8F3E", dark: "#1F6F2C" },
+        brick: { DEFAULT: "#C5392B" },
       },
       fontFamily: {
-        display: ['"Anton"', "Impact", "sans-serif"],
+        display: ['"Anton"', "system-ui", "sans-serif"],
+        head: ['"Archivo"', "system-ui", "sans-serif"],
         sans: ['"Inter"', "system-ui", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 0 40px -8px rgba(24,184,92,0.45)",
-        "glow-gold": "0 0 36px -8px rgba(255,197,61,0.45)",
-        card: "0 10px 30px -12px rgba(0,0,0,0.6)",
+        card: "0 1px 0 rgba(0,0,0,0.04), 0 12px 30px -18px rgba(0,0,0,0.35)",
+        panel: "0 20px 50px -28px rgba(0,0,0,0.55)",
+        lift: "0 2px 0 #17140f",
       },
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(12px)" },
+          "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "pop-in": {
-          "0%": { opacity: "0", transform: "scale(0.9)" },
-          "70%": { transform: "scale(1.04)" },
+          "0%": { opacity: "0", transform: "scale(0.94)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
-        "dice-roll": {
-          "0%": { transform: "rotate(0deg) scale(1)" },
-          "50%": { transform: "rotate(180deg) scale(1.15)" },
-          "100%": { transform: "rotate(360deg) scale(1)" },
+        "slide-in": {
+          "0%": { opacity: "0", transform: "translateX(-12px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
         },
-        shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+        flip: {
+          "0%": { transform: "rotateX(90deg)", opacity: "0" },
+          "100%": { transform: "rotateX(0deg)", opacity: "1" },
+        },
+        shuffle: {
+          "0%,100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-4px)" },
         },
       },
       animation: {
         "fade-up": "fade-up 0.5s ease-out both",
         "pop-in": "pop-in 0.35s ease-out both",
-        "dice-roll": "dice-roll 0.6s ease-in-out",
-        shimmer: "shimmer 2.5s linear infinite",
+        "slide-in": "slide-in 0.4s ease-out both",
+        flip: "flip 0.4s ease-out both",
+        shuffle: "shuffle 0.5s ease-in-out infinite",
       },
     },
   },

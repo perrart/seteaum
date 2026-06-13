@@ -2,37 +2,37 @@ import type { Rarity } from "../types";
 
 interface RarityStyle {
   label: string;
-  /** classes da borda + brilho do card */
-  ring: string;
-  /** classes do selo/etiqueta */
-  badge: string;
-  /** cor de texto de destaque */
+  /** cor do texto de destaque */
   text: string;
+  /** classes do selo */
+  badge: string;
+  /** ponto/indicador */
+  dot: string;
 }
 
 export const RARITY_STYLES: Record<Rarity, RarityStyle> = {
   comum: {
     label: "Comum",
-    ring: "border-white/10",
-    badge: "bg-white/10 text-chalk/70",
-    text: "text-chalk/70",
+    text: "text-ink-soft",
+    badge: "bg-ink/5 text-ink-soft",
+    dot: "bg-ink-soft/50",
   },
   raro: {
     label: "Raro",
-    ring: "border-sky-400/30",
-    badge: "bg-sky-400/15 text-sky-300",
-    text: "text-sky-300",
+    text: "text-grass-dark",
+    badge: "bg-grass/10 text-grass-dark",
+    dot: "bg-grass",
   },
   épico: {
     label: "Épico",
-    ring: "border-fuchsia-400/40 shadow-[0_0_24px_-8px_rgba(232,121,249,0.5)]",
-    badge: "bg-fuchsia-400/15 text-fuchsia-300",
-    text: "text-fuchsia-300",
+    text: "text-scarlet-dark",
+    badge: "bg-scarlet/10 text-scarlet-dark",
+    dot: "bg-scarlet",
   },
   lendário: {
     label: "Lendário",
-    ring: "border-trophy/60 shadow-glow-gold",
-    badge: "bg-trophy/20 text-trophy",
-    text: "text-trophy",
+    text: "text-gold-dark",
+    badge: "bg-gold/15 text-gold-dark",
+    dot: "bg-gold",
   },
 };
